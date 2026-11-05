@@ -28,7 +28,7 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s\n' 'puppis.uberspace.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIISWAdPPcCyJ2IpjSNYRrpykq+q7KmlCnLr5Q0seWIwH' > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
 
       - name: Dateien hochladen
