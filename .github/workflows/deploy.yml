@@ -1,0 +1,46 @@
+name: DrawLink auf Uberspace veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: drawlink-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Projekt herunterladen
+        uses: actions/checkout@v4
+
+      - name: SSH einrichten
+        env:
+          SSH_KEY: ${{ secrets.UBERSPACE_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.UBERSPACE_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+
+      - name: Dateien hochladen
+        run: |
+          ssh -o BatchMode=yes alexpa@puppis.uberspace.de \
+            'mkdir -p ~/drawlink/public'
+          scp -o BatchMode=yes package.json package-lock.json server.js \
+            alexpa@puppis.uberspace.de:~/drawlink/
+          scp -o BatchMode=yes -r public/. \
+            alexpa@puppis.uberspace.de:~/drawlink/public/
+
+      - name: Abhängigkeiten installieren und DrawLink neu starten
+        run: |
+          ssh -o BatchMode=yes alexpa@puppis.uberspace.de \
+            'bash -lc "cd ~/drawlink && npm ci --omit=dev && supervisorctl restart drawlink"'
